@@ -1,10 +1,60 @@
-import { FunctionalModel, Model } from 'functional-models/interfaces.js'
+import {
+  FunctionalModel,
+  Model,
+  ModelFetcher,
+} from 'functional-models/interfaces.js'
+import {
+  DatastoreProvider,
+  OrmModel,
+  OrmModelFactory,
+  OrmQuery,
+} from 'functional-models-orm'
 
 enum DbNamespace {
   root = '@node-in-layers/db',
 }
+/**
+ * Represents a set of database related objects. Both highlevel and low level.
+ * These objects can be utilized deep inside a services layer, to access data.
+ */
+type DatabaseObjects<T extends object = object> = {
+  datastoreProvider: DatastoreProvider
+  cleanup: () => Promise<void>
+} & T
 
-type NilDbServices = Readonly<object>
+type SimpleCrudsService<T extends FunctionalModel> = Readonly<{
+  create: (data: T) => Promise<T>
+  retrieve: (id: string | number) => Promise<T | undefined>
+  update: (data: T) => Promise<T>
+  delete: (id: string | number) => Promise<void>
+  search: (ormQuery: OrmQuery) => Promise<SearchResult<T>>
+}>
+
+type NilDbServices = Readonly<{
+  createMongoDatabaseObjects: (
+    props: MongoDatabaseObjectsProps
+  ) => Promise<DatabaseObjects<{ mongoClient: any }>>
+  createOpensearchDatabaseObjects: (
+    props: OpensearchDatabaseObjectsProps
+  ) => DatabaseObjects<{ opensearchClient: any }>
+  createSqlDatabaseObjects: (
+    props: SqlDatabaseObjectsProps
+  ) => DatabaseObjects<{ knexClient: any }>
+  createDynamoDatabaseObjects: (
+    props: DynamoDatabaseObjectsProps
+  ) => DatabaseObjects<{ dynamoLibs: any; dynamoDbClient: any }>
+  createMemoryDatabaseObjects: () => DatabaseObjects
+  getDatabaseObjects: (
+    props: DatabaseObjectsProps
+  ) => Promise<DatabaseObjects> | DatabaseObjects
+  getOrm: (props: { datastoreProvider: DatastoreProvider }) => {
+    Model: OrmModelFactory
+    fetcher: ModelFetcher
+  }
+  simpleCrudsService: <T extends FunctionalModel>(
+    model: OrmModel<T>
+  ) => SimpleCrudsService<T>
+}>
 
 type NilDbServicesLayer = Readonly<{
   [DbNamespace.root]: NilDbServices
@@ -56,7 +106,7 @@ type SqlDatabaseObjectsProps = Readonly<{
   BasicDatabaseProps &
   (KnexConfigProps | SqliteConfigProps)
 
-type MongoDatabaseObjects = Readonly<{
+type MongoDatabaseObjectsProps = Readonly<{
   host: string
   port?: number
   username?: string
@@ -87,7 +137,7 @@ type DatabaseObjectsProps = Readonly<{
   (
     | DynamoDatabaseObjectsProps
     | OpensearchDatabaseObjectsProps
-    | MongoDatabaseObjects
+    | MongoDatabaseObjectsProps
     | SqlDatabaseObjectsProps
   )
 
@@ -103,7 +153,7 @@ export {
   NilDbFeaturesLayer,
   DbNamespace,
   SupportedDatabase,
-  MongoDatabaseObjects,
+  MongoDatabaseObjectsProps,
   DatabaseObjectsProps,
   DynamoDatabaseObjectsProps,
   BasicDatabaseProps,
@@ -112,4 +162,6 @@ export {
   KnexConfigProps,
   SqliteConfigProps,
   SearchResult,
+  DatabaseObjects,
+  SimpleCrudsService,
 }

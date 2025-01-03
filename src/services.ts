@@ -7,33 +7,27 @@ import knex from 'knex'
 import { ServicesContext } from '@node-in-layers/core/index.js'
 import curry from 'lodash/curry.js'
 import omit from 'lodash/omit.js'
-import {
-  DatastoreProvider,
-  orm,
-  OrmModel,
-  OrmQuery,
-} from 'functional-models-orm'
+import { DatastoreProvider, orm } from 'functional-models-orm'
 import { datastoreProvider as dynamoDatastoreProvider } from 'functional-models-orm-dynamo'
 import { datastoreProvider as opensearchDatastoreProvider } from 'functional-models-orm-elastic'
 import { datastoreProvider as mongoDatastoreProvider } from 'functional-models-orm-mongo'
 import { datastoreProvider as sqlDatastoreProvider } from 'functional-models-orm-sql'
 import * as memoryDatastoreProvider from 'functional-models-orm/datastore/memory.js'
-import { FunctionalModel } from 'functional-models/interfaces.js'
-import { asyncMap } from 'modern-async'
 import {
   DatabaseObjectsProps,
   DynamoDatabaseObjectsProps,
-  MongoDatabaseObjects,
+  MongoDatabaseObjectsProps,
   OpensearchDatabaseObjectsProps,
   SqlDatabaseObjectsProps,
   SupportedDatabase,
   NilDbServices,
-  SearchResult,
+  DatabaseObjects,
 } from './types.js'
 import {
   getSystemInfrastructureName,
   defaultGetTableNameForModel,
   getMongoCollectionNameForModel,
+  simpleCrudsService,
 } from './libs.js'
 
 const DEFAULT_MONGO_PORT = 27017
@@ -62,7 +56,9 @@ const createMongoDatabaseObjects = async ({
   username,
   password,
   getTableNameForModel,
-}: MongoDatabaseObjects): Promise<DatabaseObjects<{ mongoClient: any }>> => {
+}: MongoDatabaseObjectsProps): Promise<
+  DatabaseObjects<{ mongoClient: any }>
+> => {
   const database = getSystemInfrastructureName({
     environment,
     systemName,
@@ -212,15 +208,6 @@ const createDynamoDatabaseObjects = ({
   }
 }
 
-/**
- * Represents a set of database related objects. Both highlevel and low level.
- * These objects can be utilized deep inside a services layer, to access data.
- */
-type DatabaseObjects<T extends object = object> = {
-  datastoreProvider: DatastoreProvider
-  cleanup: () => Promise<void>
-} & T
-
 const _supportedToDatastoreProviderFunc: Record<
   SupportedDatabase,
   DatabaseObjects<any>
@@ -253,62 +240,6 @@ const create = (context: ServicesContext): NilDbServices => {
     return {
       Model,
       fetcher,
-    }
-  }
-
-  const simpleCrudsService = <T extends FunctionalModel>(
-    model: OrmModel<T>
-  ) => {
-    const update = (data: T): Promise<T> => {
-      return model
-        .create(data)
-        .save()
-        .then(instance => {
-          if (!instance) {
-            throw new Error(`Impossible situation`)
-          }
-          return instance.toObj() as unknown as T
-        })
-    }
-
-    const create = update
-
-    const del = async (id: string | number): Promise<void> => {
-      const instance = await model.retrieve(id)
-      if (!instance) {
-        return undefined
-      }
-      await instance.delete()
-      return undefined
-    }
-
-    const retrieve = (id: string | number): Promise<T | undefined> => {
-      return model.retrieve(id).then(instance => {
-        if (!instance) {
-          return undefined
-        }
-        return instance.toObj() as unknown as T
-      })
-    }
-
-    const search = (ormQuery: OrmQuery): Promise<SearchResult<T>> => {
-      return model.search(ormQuery).then(async result => {
-        const instances = (await asyncMap(result.instances, i =>
-          i.toObj()
-        )) as unknown as readonly T[]
-        return {
-          instances,
-          page: result.page,
-        }
-      })
-    }
-
-    return {
-      create,
-      update,
-      delete: del,
-      retrieve,
-      search,
     }
   }
 
