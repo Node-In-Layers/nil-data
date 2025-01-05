@@ -27,7 +27,7 @@ import {
   getSystemInfrastructureName,
   defaultGetTableNameForModel,
   getMongoCollectionNameForModel,
-  simpleCrudsService,
+  createModelCrudsService,
 } from './libs.js'
 
 const DEFAULT_MONGO_PORT = 27017
@@ -252,7 +252,7 @@ const create = (context: ServicesContext): NilDbServices => {
     // This is the default way of getting a datastoreProvider
     getDatabaseObjects,
     getOrm,
-    simpleCrudsService,
+    createModelCrudsService,
   }
 }
 

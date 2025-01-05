@@ -4,7 +4,7 @@ import { asyncMap } from 'modern-async'
 import kebabCase from 'lodash/kebabCase.js'
 import merge from 'lodash/merge.js'
 import isString from 'lodash/isString.js'
-import { SearchResult, SimpleCrudsService } from './types.js'
+import { SearchResult, ModelCrudsInterface } from './types.js'
 
 const getSystemInfrastructureName = ({
   environment,
@@ -36,9 +36,9 @@ const getMongoCollectionNameForModel = () => (model: any | string) => {
   return kebabCase(model.getName())
 }
 
-const simpleCrudsService = <T extends FunctionalModel>(
+const createModelCrudsService = <T extends FunctionalModel>(
   model: OrmModel<T>
-): SimpleCrudsService<T> => {
+): ModelCrudsInterface<T> => {
   const update = (data: T): Promise<T> => {
     return model
       .create(data)
@@ -92,13 +92,13 @@ const simpleCrudsService = <T extends FunctionalModel>(
   }
 }
 
-const createSimpleServiceModelWrappers = (
+const createModelCrudsServiceWrappers = (
   models: OrmModel<any>[]
-): Record<string, SimpleCrudsService<any>> => {
+): Record<string, ModelCrudsInterface<any>> => {
   return merge(
     models.map(m => {
       return {
-        [m.getName()]: simpleCrudsService(m),
+        [m.getName()]: createModelCrudsService(m),
       }
     })
   )
@@ -108,6 +108,6 @@ export {
   getMongoCollectionNameForModel,
   defaultGetTableNameForModel,
   getSystemInfrastructureName,
-  simpleCrudsService,
-  createSimpleServiceModelWrappers,
+  createModelCrudsService,
+  createModelCrudsServiceWrappers,
 }

@@ -22,7 +22,7 @@ type DatabaseObjects<T extends object = object> = {
   cleanup: () => Promise<void>
 } & T
 
-type SimpleCrudsService<T extends FunctionalModel> = Readonly<{
+type ModelCrudsInterface<T extends FunctionalModel> = Readonly<{
   create: (data: T) => Promise<T>
   retrieve: (id: string | number) => Promise<T | undefined>
   update: (data: T) => Promise<T>
@@ -51,16 +51,23 @@ type NilDbServices = Readonly<{
     Model: OrmModelFactory
     fetcher: ModelFetcher
   }
-  simpleCrudsService: <T extends FunctionalModel>(
+  createModelCrudsService: <T extends FunctionalModel>(
     model: OrmModel<T>
-  ) => SimpleCrudsService<T>
+  ) => ModelCrudsInterface<T>
 }>
 
 type NilDbServicesLayer = Readonly<{
   [DbNamespace.root]: NilDbServices
 }>
 
-type NilDbFeatures = Readonly<object>
+type NilDbFeatures = Readonly<{
+  [DbNamespace.root]: {
+    wrapModelCrudsService: <T extends FunctionalModel>(
+      modelCruds: ModelCrudsInterface<T>,
+      overrides: Partial<ModelCrudsInterface<T>>
+    ) => ModelCrudsInterface<T>
+  }
+}>
 
 type NilDbFeaturesLayer = Readonly<{
   [DbNamespace.root]: NilDbFeatures
@@ -163,5 +170,5 @@ export {
   SqliteConfigProps,
   SearchResult,
   DatabaseObjects,
-  SimpleCrudsService,
+  ModelCrudsInterface,
 }

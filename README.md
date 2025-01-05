@@ -1,4 +1,4 @@
-# nil-db - A Node In Layers Package used for handling databases.
+# nil-data - A Node In Layers Package used for handling data and databases.
 
 This repository gives the ability to easily communicate with different databases. It provides a high level interface for working with databases via the [functional-models](https://github.com/monolithst/functional-models) framework, particularly the [functional-models-orm](https://github.com/monolithst/functional-models-orm) database framework. It also provides access to the lower level database objects, for optimized direct querying.
 
@@ -14,7 +14,7 @@ This repository gives the ability to easily communicate with different databases
 
 # How To Install
 
-`npm i @node-in-layers/db@latest`
+`npm i @node-in-layers/data@latest`
 
 ## How To Add To a Node In Layers System
 
@@ -27,7 +27,7 @@ import { CoreNamespace } from '@node-in-layers/core/index.js'
 
 const core = {
   apps: await Promise.all([
-    import('@node-in-layers/db/index.js'), // Right here
+    import('@node-in-layers/data/index.js'), // Right here
     import('@node-in-layers/http/index.js'),
     import('./src/my-local-app/index.js'),
   ]),
@@ -56,8 +56,8 @@ Here is how to use the Simple Cruds Service
 
 ```typescript
 import { loadSystem, Config, ServiceContext } from '@node-in-layers/core'
-import { DbNamespace, NilDbServicesLayer } from '@node-in-layers/db'
-import { createSimpleServiceModelWrappers } from '@node-in-layers/db/libs'
+import { DbNamespace, NilDbServicesLayer } from '@node-in-layers/data'
+import { createSimpleServiceModelWrappers } from '@node-in-layers/data/libs'
 import { OrmModelFactory } from 'functional-models-orm'
 import { TextProperty, UniqueIdProperty } from 'functional-models'
 import { FeaturesContext } from '@node-in-layers/core/index.js'
