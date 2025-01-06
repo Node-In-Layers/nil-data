@@ -32,8 +32,6 @@ import { CoreNamespace } from '@node-in-layers/core/index.js'
 import { DataNamespace } from '@node-in-layers/data/index.js'
 
 const core = {
-  systemName: 'my-system-name',
-  environment: 'dev',
   apps: await Promise.all([
     import('@node-in-layers/data/index.js'), // Right here
     import('@node-in-layers/http/index.js'),
@@ -53,6 +51,8 @@ const data = {
 }
 
 export default () => ({
+  systemName: 'my-system-name',
+  environment: 'dev',
   [CoreNamespace.root]: core,
   [DataNamespace.root]: data,
 })
@@ -69,8 +69,6 @@ import { CoreNamespace } from '@node-in-layers/core/index.js'
 import { DataNamespace } from '@node-in-layers/data/index.js'
 
 const core = {
-  systemName: 'my-system-name',
-  environment: 'dev',
   apps: await Promise.all([
     import('@node-in-layers/data/index.js'), // Right here
     import('@node-in-layers/http/index.js'),
@@ -98,6 +96,8 @@ const data = {
 }
 
 export default () => ({
+  systemName: 'my-system-name',
+  environment: 'dev',
   [CoreNamespace.root]: core,
   [DataNamespace.root]: data,
 })

@@ -10,6 +10,7 @@ import {
 } from 'functional-models-orm'
 import { asyncMap } from 'modern-async'
 import merge from 'lodash/merge.js'
+import get from 'lodash/get.js'
 import * as dynamo from '@aws-sdk/client-dynamodb'
 import * as libDynamo from '@aws-sdk/lib-dynamodb'
 import { Client as OpenSearchClient } from '@opensearch-project/opensearch'
@@ -292,7 +293,7 @@ const createModelCrudsService = <T extends FunctionalModel>(
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const create = (context: ServicesContext<DataConfig>): DataServices => {
-  const databases = context.config['@node-in-layers/data'].databases
+  const databases = get(context, 'config.@node-in-layers/data.databases')
   if (!databases) {
     throw new Error(
       `Must include "${DataNamespace.root}.databases" inside of a config that uses the "${DataNamespace.root}" namespace`
