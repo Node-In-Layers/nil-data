@@ -1,6 +1,10 @@
 # nil-data - A Node In Layers Package used for handling data and databases.
 
-This repository gives the ability to easily communicate with different databases. It provides a high level interface for working with databases via the [functional-models](https://github.com/monolithst/functional-models) framework, particularly the [functional-models-orm](https://github.com/monolithst/functional-models-orm) database framework. It also provides access to the lower level database objects, for optimized direct querying.
+This repository focuses on accessing and manipulating data, especially the ability to easily communicate with different databases. This package provides a high level interface for working with databases via the [functional-models](https://github.com/monolithst/functional-models) framework, particularly the [functional-models-orm](https://github.com/monolithst/functional-models-orm) functional object relational mapper (ORM) framework. It also provides access to the lower level database objects, for optimized direct querying.
+
+# How To Install
+`npm i @node-in-layers/data@latest`
+
 
 ## Supported Databases
 
@@ -11,10 +15,6 @@ This repository gives the ability to easily communicate with different databases
 - opensearch
 - postgres
 - sqlite
-
-# How To Install
-
-`npm i @node-in-layers/data@latest`
 
 ## How To Add To a Node In Layers System
 
@@ -45,18 +45,22 @@ export default () => ({
 
 There are 2 recommended uses of this package.
 
-1. The Simple Cruds Service
+1. The Model Cruds Interface
 1. Direct database access
 
-### The Simple Cruds Service
+### The Model Cruds Interface
 
-The Simple Cruds Service (Create, Retrieve, Update, Delete, Search), is a wrapper over the top of the `functional-models-orm` framework, so that seamless integration with models can be used. Instead of having to work with the model instances directly, data can pass in and out of the database without having to know anything about how database interactions work.
+The Model Cruds Interface (Create, Retrieve, Update, Delete, Search), is a series of wrappers over the top of the `functional-models-orm` framework, so that seamless integration with models can be used. Instead of having to work with the model instances directly, data can pass in and out of the database without having to know anything about how database interactions work.
 
-Here is how to use the Simple Cruds Service
+This interface can quickly wrap models at the service level, feature level and above, making it very easy to create model based REST APIS.
 
+#### A Quick Note About This Design
+ThisIt has been our experience that data models should not be passed around and used all of a system. 
+
+Here is how to use the Model Cruds Interface:
 ```typescript
 import { loadSystem, Config, ServiceContext } from '@node-in-layers/core'
-import { DbNamespace, NilDbServicesLayer } from '@node-in-layers/data'
+import { DataNamespace, DataServicesLayer } from '@node-in-layers/data'
 import { createSimpleServiceModelWrappers } from '@node-in-layers/data/libs'
 import { OrmModelFactory } from 'functional-models-orm'
 import { TextProperty, UniqueIdProperty } from 'functional-models'
@@ -106,8 +110,8 @@ const createMyModels = ({ Model }: { Model: OrmModelFactory }) => {
 
 // Using this in a service.
 const myService = {
-  // Add NilDbServices as part of the context.
-  create: async (context: ServiceContext<MyConfig, NilDbServicesLayer>) => {
+  // Add DataServices as part of the context.
+  create: async (context: ServiceContext<MyConfig, DataServicesLayer>) => {
     const databaseConfig = {
       ...context.config.myApp.database,
       environment: context.environment,
@@ -115,18 +119,18 @@ const myService = {
     }
     // 1. Create your database instance
     const dbObjects =
-      context.services[DbNamespace.root].getDatabaseObjects(databaseConfig)
+      context.services[DataNamespace.root].getDatabaseObjects(databaseConfig)
 
     // 2. Create an orm instance with your dbObjects
-    const orm = context.services[DbNamespace.root].getOrm(dbObjects)
+    const orm = context.services[DataNamespace.root].getOrm(dbObjects)
 
     // 3. Create models
     const models = createMyModels(orm)
 
-    // 4. Create Simple Cruds Service Wrapper.
+    // 4. Create Model Cruds Interface Wrapper.
     const wrappedMyCustomModels = context.services[
-      DbNamespace.root
-    ].simpleCrudsService(models.MyCustomModels)
+      DataNamespace.root
+    ].createModelCrudsService(models.MyCustomModels)
 
     // 5. You can provide this wrapper to other services and features.
     return {
@@ -141,14 +145,14 @@ const myService = {
       ...allModelsWrapped,
       /*
       Gives:
-      MyCustomModels: simpleCrudsService,
-      AnotherModels: simpleCrudsService
+      MyCustomModels: ModelCrudsInterface,
+      AnotherModels: ModelCrudsInterface 
       */
     }
   },
 }
 
-// An Example consumer of the simple cruds service.
+// An Example consumer of the model cruds interface.
 const myFeature = {
   create: async (context: FeaturesContext<MyConfig>) => {
     const myComplexFeature = async () => {

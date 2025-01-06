@@ -10,8 +10,8 @@ import {
   OrmQuery,
 } from 'functional-models-orm'
 
-enum DbNamespace {
-  root = '@node-in-layers/db',
+enum DataNamespace {
+  root = '@node-in-layers/data',
 }
 /**
  * Represents a set of database related objects. Both highlevel and low level.
@@ -30,7 +30,7 @@ type ModelCrudsInterface<T extends FunctionalModel> = Readonly<{
   search: (ormQuery: OrmQuery) => Promise<SearchResult<T>>
 }>
 
-type NilDbServices = Readonly<{
+type DataServices = Readonly<{
   createMongoDatabaseObjects: (
     props: MongoDatabaseObjectsProps
   ) => Promise<DatabaseObjects<{ mongoClient: any }>>
@@ -56,21 +56,19 @@ type NilDbServices = Readonly<{
   ) => ModelCrudsInterface<T>
 }>
 
-type NilDbServicesLayer = Readonly<{
-  [DbNamespace.root]: NilDbServices
+type DataServicesLayer = Readonly<{
+  [DataNamespace.root]: DataServices
 }>
 
-type NilDbFeatures = Readonly<{
-  [DbNamespace.root]: {
-    wrapModelCrudsService: <T extends FunctionalModel>(
-      modelCruds: ModelCrudsInterface<T>,
-      overrides: Partial<ModelCrudsInterface<T>>
-    ) => ModelCrudsInterface<T>
-  }
+type DataFeatures = Readonly<{
+  wrapModelCrudsService: <T extends FunctionalModel>(
+    modelCruds: ModelCrudsInterface<T>,
+    overrides: Partial<ModelCrudsInterface<T>>
+  ) => ModelCrudsInterface<T>
 }>
 
-type NilDbFeaturesLayer = Readonly<{
-  [DbNamespace.root]: NilDbFeatures
+type DataFeaturesLayer = Readonly<{
+  [DataNamespace.root]: DataFeatures
 }>
 
 enum SupportedDatabase {
@@ -154,11 +152,11 @@ type SearchResult<T extends FunctionalModel> = Readonly<{
 }>
 
 export {
-  NilDbServices,
-  NilDbServicesLayer,
-  NilDbFeatures,
-  NilDbFeaturesLayer,
-  DbNamespace,
+  DataServices,
+  DataServicesLayer,
+  DataFeatures,
+  DataFeaturesLayer,
+  DataNamespace,
   SupportedDatabase,
   MongoDatabaseObjectsProps,
   DatabaseObjectsProps,

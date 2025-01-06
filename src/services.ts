@@ -20,7 +20,7 @@ import {
   OpensearchDatabaseObjectsProps,
   SqlDatabaseObjectsProps,
   SupportedDatabase,
-  NilDbServices,
+  DataServices,
   DatabaseObjects,
 } from './types.js'
 import {
@@ -222,7 +222,7 @@ const _supportedToDatastoreProviderFunc: Record<
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const create = (context: ServicesContext): NilDbServices => {
+const create = (context: ServicesContext): DataServices => {
   const getDatabaseObjects = (
     props: DatabaseObjectsProps
   ): Promise<DatabaseObjects> | DatabaseObjects => {
