@@ -37,6 +37,7 @@ import {
   ModelCrudsInterface,
   SearchResult,
   DataServices,
+  MultiDatabasesProps,
 } from './types.js'
 import {
   getSystemInfrastructureName,
@@ -293,7 +294,9 @@ const createModelCrudsService = <T extends FunctionalModel>(
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const create = (context: ServicesContext<DataConfig>): DataServices => {
-  const databases = get(context, 'config.@node-in-layers/data.databases')
+  const databases = get(context, 'config.@node-in-layers/data.databases') as
+    | MultiDatabasesProps
+    | undefined
   if (!databases) {
     throw new Error(
       `Must include "${DataNamespace.root}.databases" inside of a config that uses the "${DataNamespace.root}" namespace`
