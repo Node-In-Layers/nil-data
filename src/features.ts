@@ -1,3 +1,5 @@
+import merge from 'lodash/merge.js'
+import { FunctionalModel } from 'functional-models/interfaces.js'
 import { Config, FeaturesContext } from '@node-in-layers/core/index.js'
 import {
   DataServicesLayer,
@@ -5,7 +7,6 @@ import {
   DataFeatures,
   ModelCrudsInterface,
 } from './types.js'
-import { FunctionalModel } from 'functional-models/interfaces.js'
 
 const create = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -15,14 +16,20 @@ const create = (
     modelCruds: ModelCrudsInterface<T>,
     overrides: Partial<ModelCrudsInterface<T>>
   ) => {
-    return {
-      ...modelCruds,
-      ...overrides,
-    }
+    return merge({}, modelCruds, overrides)
+  }
+
+  const wrapAllModelCrudsServices = (
+    objs: Record<string, ModelCrudsInterface<any>>,
+    overrides?: Record<string, Partial<ModelCrudsInterface<any>>>
+  ) => {
+    overrides = overrides || {}
+    return merge({}, objs, overrides)
   }
 
   return {
     wrapModelCrudsService,
+    wrapAllModelCrudsServices,
   }
 }
 

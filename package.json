@@ -63,10 +63,10 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.721.0",
     "@aws-sdk/lib-dynamodb": "^3.721.0",
-    "@node-in-layers/core": "^1.1.2",
+    "@node-in-layers/core": "^1.1.3",
     "@opensearch-project/opensearch": "^2.13.0",
     "functional-models": "^2.1.14",
-    "functional-models-orm": "^2.1.12",
+    "functional-models-orm": "^2.1.13",
     "functional-models-orm-dynamo": "^2.1.7",
     "functional-models-orm-elastic": "^1.0.5",
     "functional-models-orm-mongo": "^2.0.7",
