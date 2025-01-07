@@ -307,10 +307,12 @@ const create = (context: ServicesContext<DataConfig>): DataServices => {
   const modelCrudsServices = createModelCrudsService
 
   const modelCrudsServiceWrappers = (
-    models: OrmModel<any>[]
+    models: OrmModel<any>[] | Record<string, OrmModel<any>>
   ): Record<string, ModelCrudsInterface<any>> => {
+    const asArray = Array.isArray(models) ? models : Object.values(models)
     return merge(
-      models.map(m => {
+      // @ts-ignore
+      ...asArray.map(m => {
         return {
           [m.getName()]: createModelCrudsService(m),
         }

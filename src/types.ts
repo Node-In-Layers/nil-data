@@ -189,7 +189,7 @@ type DataServices = Readonly<{
     model: OrmModel<T>
   ) => ModelCrudsInterface<T>
   modelCrudsServiceWrappers: (
-    models: OrmModel<any>[]
+    models: OrmModel<any>[] | Record<string, OrmModel<any>>
   ) => Record<string, ModelCrudsInterface<any>>
 }>
 
