@@ -135,6 +135,10 @@ type DatabaseObjects<T extends object = object> = {
  */
 type ModelCrudsInterface<T extends FunctionalModel> = Readonly<{
   /**
+   * Gets the underlying model.
+   */
+  getModel: () => OrmModel<T>
+  /**
    * Create either one item, or an array of items in a database
    * @param data
    */

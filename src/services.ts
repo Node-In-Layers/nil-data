@@ -284,6 +284,7 @@ const createModelCrudsService = <T extends FunctionalModel>(
   }
 
   return {
+    getModel: () => model,
     create,
     update,
     delete: del,
