@@ -9,62 +9,11 @@ import {
   OrmModelFactory,
   OrmQuery,
 } from 'functional-models-orm'
+import { Config } from '@node-in-layers/core/index.js'
 
-enum DbNamespace {
-  root = '@node-in-layers/db',
+enum DataNamespace {
+  root = '@node-in-layers/data',
 }
-/**
- * Represents a set of database related objects. Both highlevel and low level.
- * These objects can be utilized deep inside a services layer, to access data.
- */
-type DatabaseObjects<T extends object = object> = {
-  datastoreProvider: DatastoreProvider
-  cleanup: () => Promise<void>
-} & T
-
-type SimpleCrudsService<T extends FunctionalModel> = Readonly<{
-  create: (data: T) => Promise<T>
-  retrieve: (id: string | number) => Promise<T | undefined>
-  update: (data: T) => Promise<T>
-  delete: (id: string | number) => Promise<void>
-  search: (ormQuery: OrmQuery) => Promise<SearchResult<T>>
-}>
-
-type NilDbServices = Readonly<{
-  createMongoDatabaseObjects: (
-    props: MongoDatabaseObjectsProps
-  ) => Promise<DatabaseObjects<{ mongoClient: any }>>
-  createOpensearchDatabaseObjects: (
-    props: OpensearchDatabaseObjectsProps
-  ) => DatabaseObjects<{ opensearchClient: any }>
-  createSqlDatabaseObjects: (
-    props: SqlDatabaseObjectsProps
-  ) => DatabaseObjects<{ knexClient: any }>
-  createDynamoDatabaseObjects: (
-    props: DynamoDatabaseObjectsProps
-  ) => DatabaseObjects<{ dynamoLibs: any; dynamoDbClient: any }>
-  createMemoryDatabaseObjects: () => DatabaseObjects
-  getDatabaseObjects: (
-    props: DatabaseObjectsProps
-  ) => Promise<DatabaseObjects> | DatabaseObjects
-  getOrm: (props: { datastoreProvider: DatastoreProvider }) => {
-    Model: OrmModelFactory
-    fetcher: ModelFetcher
-  }
-  simpleCrudsService: <T extends FunctionalModel>(
-    model: OrmModel<T>
-  ) => SimpleCrudsService<T>
-}>
-
-type NilDbServicesLayer = Readonly<{
-  [DbNamespace.root]: NilDbServices
-}>
-
-type NilDbFeatures = Readonly<object>
-
-type NilDbFeaturesLayer = Readonly<{
-  [DbNamespace.root]: NilDbFeatures
-}>
 
 enum SupportedDatabase {
   memory = 'memory',
@@ -146,12 +95,149 @@ type SearchResult<T extends FunctionalModel> = Readonly<{
   page?: any
 }>
 
+type NonProvidedDatabaseProps = Omit<
+  DatabaseObjectsProps,
+  'systemName' | 'environment'
+>
+
+type DefaultDatabaseProps = {
+  default: NonProvidedDatabaseProps
+}
+
+type MultiDatabasesProps = DefaultDatabaseProps &
+  Record<string, NonProvidedDatabaseProps>
+
+/**
+ * A config that uses databases.
+ */
+type DataConfig = Config & {
+  [DataNamespace.root]: {
+    databases: DefaultDatabaseProps | MultiDatabasesProps
+  }
+}
+/**
+ * Represents a set of database related objects. Both highlevel and low level.
+ * These objects can be utilized deep inside a services layer, to access data.
+ */
+type DatabaseObjects<T extends object = object> = {
+  /**
+   * This datastoreProvider is used for backing the ORM system.
+   */
+  datastoreProvider: DatastoreProvider
+  /**
+   * A cleanup function that should run at the end of the application, that cleans up database connections.
+   */
+  cleanup: () => Promise<void>
+} & T
+
+/**
+ * An interface for making CRUDS (create/retrieve/update/delete/search) commands into a database.
+ */
+type ModelCrudsInterface<T extends FunctionalModel> = Readonly<{
+  /**
+   * Gets the underlying model.
+   */
+  getModel: () => OrmModel<T>
+  /**
+   * Create either one item, or an array of items in a database
+   * @param data
+   */
+  create: (data: T) => Promise<T>
+  /**
+   * Retrieve a single item from the database.
+   * @param id
+   */
+  retrieve: (id: string | number) => Promise<T | undefined>
+  /**
+   * Updates a single item in the database
+   * @param data
+   */
+  update: (data: T) => Promise<T>
+  /**
+   * Deletes an item from the database
+   * @param id
+   */
+  delete: (id: string | number) => Promise<void>
+  /**
+   * Searches the corresponding table for this item.
+   * @param ormQuery
+   */
+  search: (ormQuery: OrmQuery) => Promise<SearchResult<T>>
+}>
+
+/**
+ * Data services.
+ */
+type DataServices = Readonly<{
+  getDatabaseObjects: (
+    props: DatabaseObjectsProps
+  ) => Promise<DatabaseObjects> | DatabaseObjects
+  getOrm: (props: { datastoreProvider: DatastoreProvider }) => {
+    Model: OrmModelFactory
+    fetcher: ModelFetcher
+  }
+  /**
+   * Gets all databases. This is memoized, so on the first attempt, it will create connections to 1 or more databases
+   * and then give you access to those database objects for further use. Very useful in a services layer.
+   */
+  getDatabases: () => Promise<MultiDatabases>
+  /**
+   * Runs cleanup on every database connection. Only run when the application is ending.
+   */
+  cleanup: () => Promise<void>
+  modelCrudsServices: <T extends FunctionalModel>(
+    model: OrmModel<T>
+  ) => ModelCrudsInterface<T>
+  modelCrudsServiceWrappers: (
+    models: OrmModel<any>[] | Record<string, OrmModel<any>>
+  ) => Record<string, ModelCrudsInterface<any>>
+}>
+
+/**
+ * The services for the Data package.
+ */
+type DataServicesLayer = Readonly<{
+  [DataNamespace.root]: DataServices
+}>
+
+/**
+ * The Features for the Data package.
+ */
+type DataFeatures = Readonly<{
+  wrapModelCrudsService: <T extends FunctionalModel>(
+    modelCruds: ModelCrudsInterface<T>,
+    overrides: Partial<ModelCrudsInterface<T>>
+  ) => ModelCrudsInterface<T>
+  wrapAllModelCrudsServices: (
+    objs: Record<string, ModelCrudsInterface<any>>,
+    overrides?: Record<string, ModelCrudsInterface<any>>
+  ) => Record<string, ModelCrudsInterface<any>>
+}>
+
+/**
+ * The Features Layer for the Data package.
+ */
+type DataFeaturesLayer = Readonly<{
+  [DataNamespace.root]: DataFeatures
+}>
+
+/**
+ * The default database configured.
+ */
+type DefaultDatabase = {
+  default: DatabaseObjects
+}
+
+/**
+ * 1 or more databases configured
+ */
+type MultiDatabases = DefaultDatabase & Record<string, DatabaseObjects>
+
 export {
-  NilDbServices,
-  NilDbServicesLayer,
-  NilDbFeatures,
-  NilDbFeaturesLayer,
-  DbNamespace,
+  DataServices,
+  DataFeatures,
+  DataFeaturesLayer,
+  DataNamespace,
   SupportedDatabase,
   MongoDatabaseObjectsProps,
   DatabaseObjectsProps,
@@ -163,5 +249,10 @@ export {
   SqliteConfigProps,
   SearchResult,
   DatabaseObjects,
-  SimpleCrudsService,
+  ModelCrudsInterface,
+  DataConfig,
+  DataServicesLayer,
+  MultiDatabasesProps,
+  MultiDatabases,
+  NonProvidedDatabaseProps,
 }
