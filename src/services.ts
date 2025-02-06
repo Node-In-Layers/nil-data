@@ -1,13 +1,13 @@
 import https from 'node:https'
 import { memoizeValue } from '@node-in-layers/core/utils.js'
 import { ServicesContext } from '@node-in-layers/core/index.js'
-import { FunctionalModel } from 'functional-models/interfaces.js'
 import {
-  DatastoreProvider,
-  orm,
+  DataDescription,
+  DatastoreAdapter,
   OrmModel,
-  OrmQuery,
-} from 'functional-models-orm'
+  createOrm,
+  OrmSearch,
+} from 'functional-models'
 import { asyncMap } from 'modern-async'
 import merge from 'lodash/merge.js'
 import get from 'lodash/get.js'
@@ -18,11 +18,11 @@ import { MongoClient } from 'mongodb'
 import knex from 'knex'
 import curry from 'lodash/curry.js'
 import omit from 'lodash/omit.js'
-import { datastoreProvider as dynamoDatastoreProvider } from 'functional-models-orm-dynamo'
-import { datastoreProvider as opensearchDatastoreProvider } from 'functional-models-orm-elastic'
-import { datastoreProvider as mongoDatastoreProvider } from 'functional-models-orm-mongo'
-import { datastoreProvider as sqlDatastoreProvider } from 'functional-models-orm-sql'
-import * as memoryDatastoreProvider from 'functional-models-orm/datastore/memory.js'
+import { datastoreAdapter as dynamoDatastoreAdapter } from 'functional-models-orm-dynamo'
+import { datastoreAdapter as opensearchDatastoreAdapter } from 'functional-models-orm-elastic'
+import { datastoreAdapter as mongoDatastoreAdapter } from 'functional-models-orm-mongo'
+import { datastoreAdapter as sqlDatastoreAdapter } from 'functional-models-orm-sql'
+import { datastoreAdapter as memoryDatastoreAdapter } from 'functional-models-orm-memory'
 import {
   DatabaseObjectsProps,
   DynamoDatabaseObjectsProps,
@@ -87,7 +87,7 @@ const createMongoDatabaseObjects = async ({
   const mongoClient = new MongoClient(connectionString)
   await mongoClient.connect()
 
-  const datastoreProvider = mongoDatastoreProvider({
+  const datastoreAdapter = mongoDatastoreAdapter.create({
     mongoClient,
     databaseName: database,
     getCollectionNameForModel: curry(
@@ -99,16 +99,16 @@ const createMongoDatabaseObjects = async ({
   }
   return {
     mongoClient,
-    datastoreProvider,
+    datastoreAdapter,
     cleanup,
   }
 }
 
 const createMemoryDatabaseObjects = (): DatabaseObjects => {
-  const datastoreProvider = memoryDatastoreProvider.default.default({})
+  const datastoreAdapter = memoryDatastoreAdapter.create()
   return {
     cleanup: () => Promise.resolve(),
-    datastoreProvider,
+    datastoreAdapter,
   }
 }
 
@@ -129,7 +129,7 @@ const createOpensearchDatabaseObjects = ({
   return {
     cleanup: () => Promise.resolve(),
     opensearchClient: client,
-    datastoreProvider: opensearchDatastoreProvider.create({
+    datastoreAdapter: opensearchDatastoreAdapter.create({
       client,
       getIndexForModel: curry(
         getTableNameForModel || defaultGetTableNameForModel
@@ -163,7 +163,7 @@ const createSqlDatabaseObjects = (
   }
   // @ts-ignore
   const knexClient = knex(knexConfig)
-  const datastoreProvider = sqlDatastoreProvider({
+  const datastoreAdapter = sqlDatastoreAdapter.create({
     knex: knexClient,
     getTableNameForModel: curry(
       props.getTableNameForModel || defaultGetTableNameForModel
@@ -174,7 +174,7 @@ const createSqlDatabaseObjects = (
   return {
     knexClient,
     cleanup: () => Promise.resolve(),
-    datastoreProvider,
+    datastoreAdapter,
   }
 }
 
@@ -206,7 +206,7 @@ const createDynamoDatabaseObjects = ({
     ...libDynamo,
   }
 
-  const datastoreProvider = dynamoDatastoreProvider({
+  const datastoreAdapter = dynamoDatastoreAdapter.create({
     aws3: {
       ...aws3,
       dynamoDbClient,
@@ -218,12 +218,12 @@ const createDynamoDatabaseObjects = ({
   return {
     dynamoLibs: aws3,
     dynamoDbClient,
-    datastoreProvider,
+    datastoreAdapter,
     cleanup: () => Promise.resolve(),
   }
 }
 
-const _supportedToDatastoreProviderFunc: Record<
+const _supportedToDatastoreAdapterFunc: Record<
   SupportedDatabase,
   DatabaseObjects<any>
 > = {
@@ -236,7 +236,7 @@ const _supportedToDatastoreProviderFunc: Record<
   [SupportedDatabase.postgres]: createSqlDatabaseObjects,
 }
 
-const createModelCrudsService = <T extends FunctionalModel>(
+const createModelCrudsService = <T extends DataDescription>(
   model: OrmModel<T>
 ): ModelCrudsInterface<T> => {
   const update = (data: T): Promise<T> => {
@@ -271,7 +271,7 @@ const createModelCrudsService = <T extends FunctionalModel>(
     })
   }
 
-  const search = (ormQuery: OrmQuery): Promise<SearchResult<T>> => {
+  const search = (ormQuery: OrmSearch): Promise<SearchResult<T>> => {
     return model.search(ormQuery).then(async result => {
       const instances = (await asyncMap(result.instances, i =>
         i.toObj()
@@ -324,7 +324,7 @@ const create = (context: ServicesContext<DataConfig>): DataServices => {
     props: DatabaseObjectsProps
   ): Promise<DatabaseObjects> | DatabaseObjects => {
     return Promise.resolve().then(() => {
-      const func = _supportedToDatastoreProviderFunc[props.datastoreType]
+      const func = _supportedToDatastoreAdapterFunc[props.datastoreType]
       if (!func) {
         throw new Error(`Unhandled type ${props.datastoreType}`)
       }
@@ -332,8 +332,8 @@ const create = (context: ServicesContext<DataConfig>): DataServices => {
     })
   }
 
-  const getOrm = (props: { datastoreProvider: DatastoreProvider }) => {
-    const { Model, fetcher } = orm(props)
+  const getOrm = (props: { datastoreAdapter: DatastoreAdapter }) => {
+    const { Model, fetcher } = createOrm(props)
     return {
       Model,
       fetcher,

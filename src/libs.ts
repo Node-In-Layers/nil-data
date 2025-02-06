@@ -1,4 +1,4 @@
-import { Model } from 'functional-models/interfaces.js'
+import { ModelType } from 'functional-models'
 import kebabCase from 'lodash/kebabCase.js'
 import isString from 'lodash/isString.js'
 
@@ -19,7 +19,7 @@ const getSystemInfrastructureName = ({
 const defaultGetTableNameForModel = (
   environment: string,
   systemName: string,
-  model: Model<any> | string
+  model: ModelType<any> | string
 ) => {
   const component = isString(model) ? model : model.getName()
   return getSystemInfrastructureName({ systemName, environment, component })

@@ -1,6 +1,6 @@
 # Data - A Node In Layers Package used for handling data and databases.
 
-This repository focuses on accessing and manipulating data, especially the ability to easily communicate with different databases. This package provides a high level interface for working with databases via the [functional-models](https://github.com/monolithst/functional-models) framework, particularly the [functional-models-orm](https://github.com/monolithst/functional-models-orm) functional object relational mapper (ORM) framework. It also provides access to the lower level database objects, for optimized direct querying.
+This repository focuses on accessing and manipulating data, especially the ability to easily communicate with different databases. This package provides a high level interface for working with databases via the [functional-models](https://github.com/monolithst/functional-models) framework. It also provides access to the lower level database objects, for optimized direct querying.
 
 # How To Install
 
@@ -8,22 +8,25 @@ This repository focuses on accessing and manipulating data, especially the abili
 
 ## Supported Databases
 
-- dynamo
-- memory
-- mongo
-- mysql
-- opensearch
-- postgres
-- sqlite
+- Mongo - [functional-models-orm-mongo](https://github.com/monolithst/functional-models-orm-mongo)
+- MySql - [functional-models-orm-sql](https://github.com/monolithst/functional-models-orm-sql)
+- ElasticSearch / OpenSearch - [functional-models-orm-elastic](https://github.com/monolithst/functional-models-orm-elastic)
+- Postgresql - [functional-models-orm-sql](https://github.com/monolithst/functional-models-orm-sql)
+- Sqlite - [functional-models-orm-sql](https://github.com/monolithst/functional-models-orm-sql)
+- AWS Dynamo DB - [functional-models-orm-dynamo](https://github.com/monolithst/functional-models-orm-dynamo)
+- In-Memory - [functional-models-orm-memory](https://github.com/monolithst/functional-models-orm-memory)
 
 ## How To Add To a Node In Layers System
 
 To use this package you must do the following:
 
-1. Add it to the `apps` property.
+1. Add this package to the `apps` property.
+1. Add a composite layer that has `['orm', 'models']` to your layerOrder.
 1. Add a `@node-in-layers/data` section to your configuration file.
 
 We recommend that you put the `data` app, as one of the earliest apps, it does not have any requirements, and subsequent packages likely want to use it.
+
+We recommend that you put the `models` layer 
 
 #### Example inside a `config.dev.mjs` file:
 
@@ -37,7 +40,11 @@ const core = {
     import('@node-in-layers/http/index.js'),
     import('./src/my-local-app/index.js'),
   ]),
-  layerOrder: ['services', 'features'],
+  layerOrder: [
+    ['orm', 'models'],
+    'services', 
+    'features'
+  ],
   logLevel: 'debug',
   logFormat: 'json',
 }

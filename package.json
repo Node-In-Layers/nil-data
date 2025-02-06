@@ -10,10 +10,10 @@
     "commit": "cz",
     "dist": "npm run build && cd dist && npm publish",
     "eslint": "eslint .",
-    "feature-tests": "./node_modules/.bin/cucumber-js -p default",
     "prettier": "prettier --write .",
     "test": "export TS_NODE_PROJECT='./tsconfig.test.json' && mocha -r tsx ./test/src/*.test.ts ./test/src/**/*.test.ts ./test/src/**/**/*.test.ts",
-    "test:coverage": "nyc --all --reporter cobertura --reporter text --reporter lcov --reporter html npm run test"
+    "test:coverage": "nyc --all --reporter cobertura --reporter text --reporter lcov --reporter html npm run test",
+    "test:features": "./node_modules/.bin/cucumber-js -p default"
   },
   "config": {
     "commitizen": {
@@ -64,14 +64,14 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.721.0",
     "@aws-sdk/lib-dynamodb": "^3.721.0",
-    "@node-in-layers/core": "^1.1.3",
+    "@node-in-layers/core": "^1.1.5",
     "@opensearch-project/opensearch": "^2.13.0",
-    "functional-models": "^2.1.14",
-    "functional-models-orm": "^2.1.13",
-    "functional-models-orm-dynamo": "^2.1.7",
-    "functional-models-orm-elastic": "^1.0.5",
-    "functional-models-orm-mongo": "^2.0.7",
-    "functional-models-orm-sql": "^2.1.3",
+    "functional-models": "^3.0.12",
+    "functional-models-orm-dynamo": "^3.0.0",
+    "functional-models-orm-elastic": "^3.0.0",
+    "functional-models-orm-memory": "^3.0.0",
+    "functional-models-orm-mongo": "^3.0.0",
+    "functional-models-orm-sql": "^3.0.0",
     "knex": "^3.1.0",
     "lodash": "^4.17.21",
     "modern-async": "^2.0.4",
