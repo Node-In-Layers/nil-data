@@ -1,15 +1,12 @@
 import {
-  FunctionalModel,
-  Model,
-  ModelFetcher,
-} from 'functional-models/interfaces.js'
-import {
-  DatastoreProvider,
+  DataDescription,
+  ModelType,
+  DatastoreAdapter,
   OrmModel,
-  OrmModelFactory,
-  OrmQuery,
-} from 'functional-models-orm'
-import { Config } from '@node-in-layers/core/index.js'
+  OrmSearch,
+  Orm,
+} from 'functional-models'
+import { Config, GetModelPropsFunc } from '@node-in-layers/core/index.js'
 
 enum DataNamespace {
   root = '@node-in-layers/data',
@@ -31,7 +28,7 @@ type BasicDatabaseProps = Readonly<{
   getTableNameForModel?: (
     systemName: string,
     environment: string,
-    model: Model<any>
+    model: ModelType<any>
   ) => string
 }>
 
@@ -90,7 +87,7 @@ type DatabaseObjectsProps = Readonly<{
     | SqlDatabaseObjectsProps
   )
 
-type SearchResult<T extends FunctionalModel> = Readonly<{
+type SearchResult<T extends DataDescription> = Readonly<{
   instances: readonly T[]
   page?: any
 }>
@@ -121,9 +118,9 @@ type DataConfig = Config & {
  */
 type DatabaseObjects<T extends object = object> = {
   /**
-   * This datastoreProvider is used for backing the ORM system.
+   * This datastoreAdapter is used for backing the ORM system.
    */
-  datastoreProvider: DatastoreProvider
+  datastoreAdapter: DatastoreAdapter
   /**
    * A cleanup function that should run at the end of the application, that cleans up database connections.
    */
@@ -133,7 +130,7 @@ type DatabaseObjects<T extends object = object> = {
 /**
  * An interface for making CRUDS (create/retrieve/update/delete/search) commands into a database.
  */
-type ModelCrudsInterface<T extends FunctionalModel> = Readonly<{
+type ModelCrudsInterface<T extends DataDescription> = Readonly<{
   /**
    * Gets the underlying model.
    */
@@ -162,20 +159,15 @@ type ModelCrudsInterface<T extends FunctionalModel> = Readonly<{
    * Searches the corresponding table for this item.
    * @param ormQuery
    */
-  search: (ormQuery: OrmQuery) => Promise<SearchResult<T>>
+  search: (ormQuery: OrmSearch) => Promise<SearchResult<T>>
 }>
 
 /**
  * Data services.
  */
 type DataServices = Readonly<{
-  getDatabaseObjects: (
-    props: DatabaseObjectsProps
-  ) => Promise<DatabaseObjects> | DatabaseObjects
-  getOrm: (props: { datastoreProvider: DatastoreProvider }) => {
-    Model: OrmModelFactory
-    fetcher: ModelFetcher
-  }
+  getDatabaseObjects: (props: DatabaseObjectsProps) => DatabaseObjects
+  getOrm: (props: { datastoreAdapter: DatastoreAdapter }) => Orm
   /**
    * Gets all databases. This is memoized, so on the first attempt, it will create connections to 1 or more databases
    * and then give you access to those database objects for further use. Very useful in a services layer.
@@ -185,12 +177,10 @@ type DataServices = Readonly<{
    * Runs cleanup on every database connection. Only run when the application is ending.
    */
   cleanup: () => Promise<void>
-  modelCrudsServices: <T extends FunctionalModel>(
-    model: OrmModel<T>
-  ) => ModelCrudsInterface<T>
-  modelCrudsServiceWrappers: (
-    models: OrmModel<any>[] | Record<string, OrmModel<any>>
-  ) => Record<string, ModelCrudsInterface<any>>
+  /**
+   * A function that gives ModelProps. This is useful for getting enabling ORM based models.
+   */
+  getModelProps: GetModelPropsFunc
 }>
 
 /**
@@ -204,7 +194,7 @@ type DataServicesLayer = Readonly<{
  * The Features for the Data package.
  */
 type DataFeatures = Readonly<{
-  wrapModelCrudsService: <T extends FunctionalModel>(
+  wrapModelCrudsService: <T extends DataDescription>(
     modelCruds: ModelCrudsInterface<T>,
     overrides: Partial<ModelCrudsInterface<T>>
   ) => ModelCrudsInterface<T>

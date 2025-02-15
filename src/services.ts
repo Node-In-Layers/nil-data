@@ -1,13 +1,11 @@
 import https from 'node:https'
-import { memoizeValue } from '@node-in-layers/core/utils.js'
+import { memoizeValueSync } from '@node-in-layers/core/utils.js'
 import { ServicesContext } from '@node-in-layers/core/index.js'
-import { FunctionalModel } from 'functional-models/interfaces.js'
 import {
-  DatastoreProvider,
-  orm,
-  OrmModel,
-  OrmQuery,
-} from 'functional-models-orm'
+  DatastoreAdapter,
+  createOrm,
+  ModelInstanceFetcher,
+} from 'functional-models'
 import { asyncMap } from 'modern-async'
 import merge from 'lodash/merge.js'
 import get from 'lodash/get.js'
@@ -18,11 +16,11 @@ import { MongoClient } from 'mongodb'
 import knex from 'knex'
 import curry from 'lodash/curry.js'
 import omit from 'lodash/omit.js'
-import { datastoreProvider as dynamoDatastoreProvider } from 'functional-models-orm-dynamo'
-import { datastoreProvider as opensearchDatastoreProvider } from 'functional-models-orm-elastic'
-import { datastoreProvider as mongoDatastoreProvider } from 'functional-models-orm-mongo'
-import { datastoreProvider as sqlDatastoreProvider } from 'functional-models-orm-sql'
-import * as memoryDatastoreProvider from 'functional-models-orm/datastore/memory.js'
+import { datastoreAdapter as dynamoDatastoreAdapter } from 'functional-models-orm-dynamo'
+import { datastoreAdapter as opensearchDatastoreAdapter } from 'functional-models-orm-elastic'
+import { datastoreAdapter as mongoDatastoreAdapter } from 'functional-models-orm-mongo'
+import { datastoreAdapter as sqlDatastoreAdapter } from 'functional-models-orm-sql'
+import { datastoreAdapter as memoryDatastoreAdapter } from 'functional-models-orm-memory'
 import {
   DatabaseObjectsProps,
   DynamoDatabaseObjectsProps,
@@ -34,8 +32,6 @@ import {
   DataConfig,
   DataNamespace,
   NonProvidedDatabaseProps,
-  ModelCrudsInterface,
-  SearchResult,
   DataServices,
   MultiDatabasesProps,
 } from './types.js'
@@ -63,7 +59,7 @@ const createMongoConnectionString = ({
   }`
 }
 
-const createMongoDatabaseObjects = async ({
+const createMongoDatabaseObjects = ({
   environment,
   systemName,
   host,
@@ -71,9 +67,7 @@ const createMongoDatabaseObjects = async ({
   username,
   password,
   getTableNameForModel,
-}: MongoDatabaseObjectsProps): Promise<
-  DatabaseObjects<{ mongoClient: any }>
-> => {
+}: MongoDatabaseObjectsProps): DatabaseObjects<{ mongoClient: any }> => {
   const database = getSystemInfrastructureName({
     environment,
     systemName,
@@ -85,9 +79,9 @@ const createMongoDatabaseObjects = async ({
     password,
   })
   const mongoClient = new MongoClient(connectionString)
-  await mongoClient.connect()
+  mongoClient.connect()
 
-  const datastoreProvider = mongoDatastoreProvider({
+  const datastoreAdapter = mongoDatastoreAdapter.create({
     mongoClient,
     databaseName: database,
     getCollectionNameForModel: curry(
@@ -99,16 +93,16 @@ const createMongoDatabaseObjects = async ({
   }
   return {
     mongoClient,
-    datastoreProvider,
+    datastoreAdapter,
     cleanup,
   }
 }
 
 const createMemoryDatabaseObjects = (): DatabaseObjects => {
-  const datastoreProvider = memoryDatastoreProvider.default.default({})
+  const datastoreAdapter = memoryDatastoreAdapter.create()
   return {
     cleanup: () => Promise.resolve(),
-    datastoreProvider,
+    datastoreAdapter,
   }
 }
 
@@ -129,7 +123,7 @@ const createOpensearchDatabaseObjects = ({
   return {
     cleanup: () => Promise.resolve(),
     opensearchClient: client,
-    datastoreProvider: opensearchDatastoreProvider.create({
+    datastoreAdapter: opensearchDatastoreAdapter.create({
       client,
       getIndexForModel: curry(
         getTableNameForModel || defaultGetTableNameForModel
@@ -163,7 +157,7 @@ const createSqlDatabaseObjects = (
   }
   // @ts-ignore
   const knexClient = knex(knexConfig)
-  const datastoreProvider = sqlDatastoreProvider({
+  const datastoreAdapter = sqlDatastoreAdapter.create({
     knex: knexClient,
     getTableNameForModel: curry(
       props.getTableNameForModel || defaultGetTableNameForModel
@@ -174,7 +168,7 @@ const createSqlDatabaseObjects = (
   return {
     knexClient,
     cleanup: () => Promise.resolve(),
-    datastoreProvider,
+    datastoreAdapter,
   }
 }
 
@@ -206,7 +200,7 @@ const createDynamoDatabaseObjects = ({
     ...libDynamo,
   }
 
-  const datastoreProvider = dynamoDatastoreProvider({
+  const datastoreAdapter = dynamoDatastoreAdapter.create({
     aws3: {
       ...aws3,
       dynamoDbClient,
@@ -218,12 +212,12 @@ const createDynamoDatabaseObjects = ({
   return {
     dynamoLibs: aws3,
     dynamoDbClient,
-    datastoreProvider,
+    datastoreAdapter,
     cleanup: () => Promise.resolve(),
   }
 }
 
-const _supportedToDatastoreProviderFunc: Record<
+const _supportedToDatastoreAdapterFunc: Record<
   SupportedDatabase,
   DatabaseObjects<any>
 > = {
@@ -236,64 +230,6 @@ const _supportedToDatastoreProviderFunc: Record<
   [SupportedDatabase.postgres]: createSqlDatabaseObjects,
 }
 
-const createModelCrudsService = <T extends FunctionalModel>(
-  model: OrmModel<T>
-): ModelCrudsInterface<T> => {
-  const update = (data: T): Promise<T> => {
-    return model
-      .create(data)
-      .save()
-      .then(instance => {
-        if (!instance) {
-          throw new Error(`Impossible situation`)
-        }
-        return instance.toObj() as unknown as T
-      })
-  }
-
-  const create = update
-
-  const del = async (id: string | number): Promise<void> => {
-    const instance = await model.retrieve(id)
-    if (!instance) {
-      return undefined
-    }
-    await instance.delete()
-    return undefined
-  }
-
-  const retrieve = (id: string | number): Promise<T | undefined> => {
-    return model.retrieve(id).then(instance => {
-      if (!instance) {
-        return undefined
-      }
-      return instance.toObj() as unknown as T
-    })
-  }
-
-  const search = (ormQuery: OrmQuery): Promise<SearchResult<T>> => {
-    return model.search(ormQuery).then(async result => {
-      const instances = (await asyncMap(result.instances, i =>
-        i.toObj()
-      )) as unknown as readonly T[]
-      return {
-        instances,
-        page: result.page,
-      }
-    })
-  }
-
-  return {
-    getModel: () => model,
-    create,
-    update,
-    delete: del,
-    retrieve,
-    search,
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const create = (context: ServicesContext<DataConfig>): DataServices => {
   const databases = get(context, 'config.@node-in-layers/data.databases') as
     | MultiDatabasesProps
@@ -304,36 +240,16 @@ const create = (context: ServicesContext<DataConfig>): DataServices => {
     )
   }
 
-  const modelCrudsServices = createModelCrudsService
-
-  const modelCrudsServiceWrappers = (
-    models: OrmModel<any>[] | Record<string, OrmModel<any>>
-  ): Record<string, ModelCrudsInterface<any>> => {
-    const asArray = Array.isArray(models) ? models : Object.values(models)
-    return merge(
-      // @ts-ignore
-      ...asArray.map(m => {
-        return {
-          [m.getName()]: createModelCrudsService(m),
-        }
-      })
-    )
+  const getDatabaseObjects = (props: DatabaseObjectsProps): DatabaseObjects => {
+    const func = _supportedToDatastoreAdapterFunc[props.datastoreType]
+    if (!func) {
+      throw new Error(`Unhandled type ${props.datastoreType}`)
+    }
+    return func(props)
   }
 
-  const getDatabaseObjects = (
-    props: DatabaseObjectsProps
-  ): Promise<DatabaseObjects> | DatabaseObjects => {
-    return Promise.resolve().then(() => {
-      const func = _supportedToDatastoreProviderFunc[props.datastoreType]
-      if (!func) {
-        throw new Error(`Unhandled type ${props.datastoreType}`)
-      }
-      return func(props)
-    })
-  }
-
-  const getOrm = (props: { datastoreProvider: DatastoreProvider }) => {
-    const { Model, fetcher } = orm(props)
+  const getOrm = (props: { datastoreAdapter: DatastoreAdapter }) => {
+    const { Model, fetcher } = createOrm(props)
     return {
       Model,
       fetcher,
@@ -341,11 +257,17 @@ const create = (context: ServicesContext<DataConfig>): DataServices => {
   }
 
   const cleanup = async () => {
-    const databases = await getDatabases()
-    await asyncMap(Object.values(databases), d => d.cleanup(), 1)
+    const databases: Record<string, DatabaseObjects> = getDatabases()
+    await asyncMap(
+      Object.values(databases),
+      (d: DatabaseObjects) => d.cleanup(),
+      1
+    )
   }
 
-  const _getDatabases = async () => {
+  const _getDatabases = (): {
+    default: DatabaseObjects
+  } & Record<string, DatabaseObjects> => {
     const neededProps = {
       environment: context.config.environment,
       systemName: context.config.systemName,
@@ -362,33 +284,54 @@ const create = (context: ServicesContext<DataConfig>): DataServices => {
       return merge(acc, { [x]: merge(y, neededProps) })
     }, {}) as Record<string, DatabaseObjectsProps>
 
-    const defaultDb = await getDatabaseObjects(defaultDbProps)
-    const otherDatabases: Record<string, DatabaseObjects> =
-      await Object.entries(otherProps2).reduce(
-        async (accP, props) => {
-          const acc = await accP
-          const dbObjects = await getDatabaseObjects(props[1])
-          return merge(acc, {
-            [props[0]]: dbObjects,
-          })
-        },
-        Promise.resolve({} as Record<string, DatabaseObjects>)
-      )
+    const defaultDb = getDatabaseObjects(defaultDbProps)
+    const otherDatabases: Record<string, DatabaseObjects> = Object.entries(
+      otherProps2
+    ).reduce(
+      (acc, props) => {
+        const dbObjects = getDatabaseObjects(props[1])
+        return merge(acc, {
+          [props[0]]: dbObjects,
+        })
+      },
+      {} as Record<string, DatabaseObjects>
+    )
     return {
       default: defaultDb,
       ...otherDatabases,
     }
   }
 
-  const getDatabases = () => memoizeValue(_getDatabases)()
+  const getDatabases = memoizeValueSync(_getDatabases)
+
+  const getModelProps = <
+    TModelOverrides extends object = object,
+    TModelInstanceOverrides extends object = object,
+  >(
+    context: ServicesContext,
+    datastoreName?: string
+  ) => {
+    datastoreName = datastoreName || 'default'
+    const database = getDatabases()[datastoreName]
+    if (!database) {
+      throw new Error(`No database named ${datastoreName}`)
+    }
+    const orm = getOrm(database)
+    return {
+      Model: orm.Model,
+      fetcher: orm.fetcher as ModelInstanceFetcher<
+        TModelOverrides,
+        TModelInstanceOverrides
+      >,
+    }
+  }
 
   return {
     getDatabaseObjects,
     getOrm,
     getDatabases,
     cleanup,
-    modelCrudsServices,
-    modelCrudsServiceWrappers,
+    getModelProps,
   }
 }
 

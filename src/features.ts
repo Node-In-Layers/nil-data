@@ -1,5 +1,5 @@
 import merge from 'lodash/merge.js'
-import { FunctionalModel } from 'functional-models/interfaces.js'
+import { DataDescription } from 'functional-models'
 import { Config, FeaturesContext } from '@node-in-layers/core/index.js'
 import {
   DataServicesLayer,
@@ -12,7 +12,7 @@ const create = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   context: FeaturesContext<Config, DataServicesLayer, DataFeaturesLayer>
 ): DataFeatures => {
-  const wrapModelCrudsService = <T extends FunctionalModel>(
+  const wrapModelCrudsService = <T extends DataDescription>(
     modelCruds: ModelCrudsInterface<T>,
     overrides: Partial<ModelCrudsInterface<T>>
   ) => {
