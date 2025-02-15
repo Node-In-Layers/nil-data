@@ -11,6 +11,7 @@
     "dist": "npm run build && cd dist && npm publish",
     "eslint": "eslint .",
     "prettier": "prettier --write .",
+    "prettier:check": "prettier -c .",
     "test": "export TS_NODE_PROJECT='./tsconfig.test.json' && mocha -r tsx ./test/src/*.test.ts ./test/src/**/*.test.ts ./test/src/**/**/*.test.ts",
     "test:coverage": "nyc --all --reporter cobertura --reporter text --reporter lcov --reporter html npm run test",
     "test:features": "./node_modules/.bin/cucumber-js -p default"
