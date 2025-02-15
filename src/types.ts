@@ -1,14 +1,12 @@
 import {
   DataDescription,
   ModelType,
-  ModelInstanceFetcher,
   DatastoreAdapter,
   OrmModel,
-  OrmModelFactory,
   OrmSearch,
   Orm,
 } from 'functional-models'
-import { Config } from '@node-in-layers/core/index.js'
+import { Config, GetModelPropsFunc } from '@node-in-layers/core/index.js'
 
 enum DataNamespace {
   root = '@node-in-layers/data',
@@ -168,9 +166,7 @@ type ModelCrudsInterface<T extends DataDescription> = Readonly<{
  * Data services.
  */
 type DataServices = Readonly<{
-  getDatabaseObjects: (
-    props: DatabaseObjectsProps
-  ) => Promise<DatabaseObjects> | DatabaseObjects
+  getDatabaseObjects: (props: DatabaseObjectsProps) => DatabaseObjects
   getOrm: (props: { datastoreAdapter: DatastoreAdapter }) => Orm
   /**
    * Gets all databases. This is memoized, so on the first attempt, it will create connections to 1 or more databases
@@ -181,12 +177,10 @@ type DataServices = Readonly<{
    * Runs cleanup on every database connection. Only run when the application is ending.
    */
   cleanup: () => Promise<void>
-  modelCrudsServices: <T extends DataDescription>(
-    model: OrmModel<T>
-  ) => ModelCrudsInterface<T>
-  modelCrudsServiceWrappers: (
-    models: OrmModel<any>[] | Record<string, OrmModel<any>>
-  ) => Record<string, ModelCrudsInterface<any>>
+  /**
+   * A function that gives ModelProps. This is useful for getting enabling ORM based models.
+   */
+  getModelProps: GetModelPropsFunc
 }>
 
 /**
