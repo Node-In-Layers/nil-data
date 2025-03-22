@@ -1,7 +1,7 @@
 {
   "name": "@node-in-layers/data",
   "type": "module",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A Node In Layers package used for handling databases.",
   "main": "index.js",
   "scripts": {
@@ -67,7 +67,7 @@
     "@aws-sdk/lib-dynamodb": "^3.721.0",
     "@node-in-layers/core": "^1.1.6",
     "@opensearch-project/opensearch": "^2.13.0",
-    "functional-models": "^3.0.12",
+    "functional-models": "^3.0.14",
     "functional-models-orm-dynamo": "^3.0.0",
     "functional-models-orm-elastic": "^3.0.0",
     "functional-models-orm-memory": "^3.0.0",
