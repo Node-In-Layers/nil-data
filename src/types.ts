@@ -172,7 +172,7 @@ type DataServices = Readonly<{
    * Gets all databases. This is memoized, so on the first attempt, it will create connections to 1 or more databases
    * and then give you access to those database objects for further use. Very useful in a services layer.
    */
-  getDatabases: () => Promise<MultiDatabases>
+  getDatabases: () => MultiDatabases
   /**
    * Runs cleanup on every database connection. Only run when the application is ending.
    */
