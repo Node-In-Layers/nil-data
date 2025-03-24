@@ -30,6 +30,7 @@ type BasicDatabaseProps = Readonly<{
     environment: string,
     model: ModelType<any>
   ) => string
+  additionalArgs?: readonly any[]
 }>
 
 type KnexConfigProps = Readonly<{

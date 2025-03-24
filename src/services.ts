@@ -48,15 +48,17 @@ const createMongoConnectionString = ({
   port,
   username,
   password,
+  database,
 }: {
   host: string
   port?: number | string
   password?: string
   username?: string
+  database?: string
 }) => {
   return `mongodb://${username ? `${username}:${password}@` : ''}${host}:${
     port || DEFAULT_MONGO_PORT
-  }`
+  }${database ? `/${database}` : ''}`
 }
 
 const createMongoDatabaseObjects = ({
@@ -67,6 +69,7 @@ const createMongoDatabaseObjects = ({
   username,
   password,
   getTableNameForModel,
+  additionalArgs,
 }: MongoDatabaseObjectsProps): DatabaseObjects<{ mongoClient: any }> => {
   const database = getSystemInfrastructureName({
     environment,
@@ -77,8 +80,10 @@ const createMongoDatabaseObjects = ({
     port,
     username,
     password,
+    database,
   })
-  const mongoClient = new MongoClient(connectionString)
+  // @ts-ignore
+  const mongoClient = new MongoClient(connectionString, ...additionalArgs)
   mongoClient.connect()
 
   const datastoreAdapter = mongoDatastoreAdapter.create({
