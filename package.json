@@ -1,7 +1,7 @@
 {
   "name": "@node-in-layers/data",
   "type": "module",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "A Node In Layers package used for handling databases.",
   "main": "index.js",
   "scripts": {

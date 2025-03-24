@@ -83,7 +83,10 @@ const createMongoDatabaseObjects = ({
     database,
   })
   // @ts-ignore
-  const mongoClient = new MongoClient(connectionString, ...additionalArgs)
+  const mongoClient = new MongoClient(
+    connectionString,
+    ...(additionalArgs ? additionalArgs : [])
+  )
   mongoClient.connect()
 
   const datastoreAdapter = mongoDatastoreAdapter.create({
