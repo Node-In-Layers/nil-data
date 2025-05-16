@@ -58,6 +58,7 @@ type MongoDatabaseObjectsProps = Readonly<{
   port?: number
   username?: string
   password?: string
+  connectionString?: string
 }> &
   BasicDatabaseProps
 

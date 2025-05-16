@@ -70,18 +70,21 @@ const createMongoDatabaseObjects = ({
   password,
   getTableNameForModel,
   additionalArgs,
+  connectionString,
 }: MongoDatabaseObjectsProps): DatabaseObjects<{ mongoClient: any }> => {
   const database = getSystemInfrastructureName({
     environment,
     systemName,
   })
-  const connectionString = createMongoConnectionString({
-    host,
-    port,
-    username,
-    password,
-    database,
-  })
+  connectionString =
+    connectionString ||
+    createMongoConnectionString({
+      host,
+      port,
+      username,
+      password,
+      database,
+    })
   // @ts-ignore
   const mongoClient = new MongoClient(
     connectionString,
