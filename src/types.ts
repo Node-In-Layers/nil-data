@@ -5,6 +5,7 @@ import {
   OrmModel,
   OrmSearch,
   Orm,
+  PrimaryKeyType,
 } from 'functional-models'
 import { Config, GetModelPropsFunc } from '@node-in-layers/core/index.js'
 
@@ -162,6 +163,16 @@ type ModelCrudsInterface<T extends DataDescription> = Readonly<{
    * @param ormQuery
    */
   search: (ormQuery: OrmSearch) => Promise<SearchResult<T>>
+  /**
+   * Bulk inserts an array of items into the database
+   * @param data
+   */
+  bulkInsert: (data: T[]) => Promise<void>
+  /**
+   * Bulk deletes an array of items from the database
+   * @param primaryKeys
+   */
+  bulkDelete: (primaryKeys: PrimaryKeyType[]) => Promise<void>
 }>
 
 /**
