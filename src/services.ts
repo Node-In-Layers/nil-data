@@ -99,8 +99,27 @@ const createMongoDatabaseObjects = ({
       getTableNameForModel || getMongoCollectionNameForModel
     )(environment, systemName),
   })
-  const cleanup = () => {
-    return mongoClient.close()
+  const cleanup = async () => {
+    return Promise.resolve()
+      .then(async () => {
+        await mongoClient.close()
+      })
+      .catch(error => {
+        const errorName = (error as any)?.name
+        const errorMessage = (error as any)?.message || String(error)
+        const isMongoClientClosedError =
+          errorName === 'MongoClientClosedError' &&
+          errorMessage.includes(
+            'Operation interrupted because client was closed'
+          )
+        const isCombinedMessageMatch = errorMessage.includes(
+          'MongoClientClosedError: Operation interrupted because client was closed'
+        )
+        if (isMongoClientClosedError || isCombinedMessageMatch) {
+          return
+        }
+        throw error
+      })
   }
   return {
     mongoClient,
