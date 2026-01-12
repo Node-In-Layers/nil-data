@@ -10,6 +10,7 @@ import { asyncMap } from 'modern-async'
 import merge from 'lodash/merge.js'
 import get from 'lodash/get.js'
 import * as dynamo from '@aws-sdk/client-dynamodb'
+import * as jsonDb from 'functional-models-orm-json'
 import * as libDynamo from '@aws-sdk/lib-dynamodb'
 import { Client as OpenSearchClient } from '@opensearch-project/opensearch'
 import { MongoClient } from 'mongodb'
@@ -34,6 +35,7 @@ import {
   NonProvidedDatabaseProps,
   DataServices,
   MultiDatabasesProps,
+  JsonDatabaseObjectsProps,
 } from './types.js'
 import {
   getSystemInfrastructureName,
@@ -125,6 +127,18 @@ const createMongoDatabaseObjects = ({
     mongoClient,
     datastoreAdapter,
     cleanup,
+  }
+}
+
+const createJsonDatabaseObjects = ({
+  filePath,
+}: JsonDatabaseObjectsProps): DatabaseObjects => {
+  const datastoreAdapter = jsonDb.datastoreAdapter.create({
+    filePath,
+  })
+  return {
+    cleanup: () => Promise.resolve(),
+    datastoreAdapter,
   }
 }
 
@@ -258,6 +272,7 @@ const _supportedToDatastoreAdapterFunc: Record<
   [SupportedDatabase.sqlite]: createSqlDatabaseObjects,
   [SupportedDatabase.mysql]: createSqlDatabaseObjects,
   [SupportedDatabase.postgres]: createSqlDatabaseObjects,
+  [SupportedDatabase.json]: createJsonDatabaseObjects,
 }
 
 const create = (context: ServicesContext<DataConfig>): DataServices => {

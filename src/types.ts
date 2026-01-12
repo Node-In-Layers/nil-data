@@ -15,6 +15,7 @@ enum DataNamespace {
 
 enum SupportedDatabase {
   memory = 'memory',
+  json = 'json',
   dynamo = 'dynamo',
   mongo = 'mongo',
   opensearch = 'opensearch',
@@ -79,6 +80,11 @@ type DynamoDatabaseObjectsProps = Readonly<{
 }> &
   BasicDatabaseProps
 
+type JsonDatabaseObjectsProps = Readonly<{
+  filePath: string
+}> &
+  BasicDatabaseProps
+
 type DatabaseObjectsProps = Readonly<{
   datastoreType: SupportedDatabase
 }> &
@@ -88,6 +94,7 @@ type DatabaseObjectsProps = Readonly<{
     | OpensearchDatabaseObjectsProps
     | MongoDatabaseObjectsProps
     | SqlDatabaseObjectsProps
+    | JsonDatabaseObjectsProps
   )
 
 type SearchResult<T extends DataDescription> = Readonly<{
@@ -258,4 +265,5 @@ export {
   MultiDatabasesProps,
   MultiDatabases,
   NonProvidedDatabaseProps,
+  JsonDatabaseObjectsProps,
 }
