@@ -82,6 +82,7 @@ type DynamoDatabaseObjectsProps = Readonly<{
 
 type JsonDatabaseObjectsProps = Readonly<{
   filePath: string
+  databaseMode?: boolean
 }> &
   BasicDatabaseProps
 

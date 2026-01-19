@@ -130,12 +130,10 @@ const createMongoDatabaseObjects = ({
   }
 }
 
-const createJsonDatabaseObjects = ({
-  filePath,
-}: JsonDatabaseObjectsProps): DatabaseObjects => {
-  const datastoreAdapter = jsonDb.datastoreAdapter.create({
-    filePath,
-  })
+const createJsonDatabaseObjects = (
+  props: JsonDatabaseObjectsProps
+): DatabaseObjects => {
+  const datastoreAdapter = jsonDb.datastoreAdapter.create(props)
   return {
     cleanup: () => Promise.resolve(),
     datastoreAdapter,
