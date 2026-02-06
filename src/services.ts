@@ -1,6 +1,6 @@
 import https from 'node:https'
 import { memoizeValueSync } from '@node-in-layers/core/utils.js'
-import { ServicesContext } from '@node-in-layers/core/index.js'
+import { CrossLayerProps, ServicesContext } from '@node-in-layers/core/index.js'
 import {
   DatastoreAdapter,
   createOrm,
@@ -352,12 +352,19 @@ const create = (context: ServicesContext<DataConfig>): DataServices => {
     TModelInstanceOverrides extends object = object,
   >(
     context: ServicesContext,
-    datastoreName?: string
+    datastoreName?: string | CrossLayerProps,
+    crossLayerProps?: CrossLayerProps
   ) => {
-    datastoreName = datastoreName || 'default'
-    const database = getDatabases()[datastoreName]
+    const theDatastoreName =
+      (crossLayerProps
+        ? (datastoreName as string)
+        : typeof datastoreName === 'string'
+          ? (datastoreName as string)
+          : 'default') || 'default'
+
+    const database = getDatabases()[theDatastoreName]
     if (!database) {
-      throw new Error(`No database named ${datastoreName}`)
+      throw new Error(`No database named ${theDatastoreName}`)
     }
     const orm = getOrm(database)
     return {
