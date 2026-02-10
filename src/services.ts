@@ -216,6 +216,7 @@ const createSqlDatabaseObjects = (
 
 const createDynamoDatabaseObjects = ({
   awsRegion,
+  awsClientProps,
   environment,
   systemName,
   httpsAgentConfig,
@@ -234,6 +235,7 @@ const createDynamoDatabaseObjects = ({
   const awsConfig = {
     region: awsRegion,
     sslAgent,
+    ...awsClientProps,
   }
 
   const dynamoDbClient = new dynamo.DynamoDBClient(awsConfig)

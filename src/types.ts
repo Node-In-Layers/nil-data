@@ -73,6 +73,7 @@ type OpensearchDatabaseObjectsProps = Readonly<{
 
 type DynamoDatabaseObjectsProps = Readonly<{
   awsRegion: string
+  awsClientProps?: Record<string, any>
   httpsAgentConfig?: {
     keepAlive?: boolean
     maxSockets?: number
