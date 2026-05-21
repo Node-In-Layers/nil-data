@@ -73,7 +73,7 @@
     "functional-models-orm-elastic": "^3.0.0",
     "functional-models-orm-json": "^3.0.2",
     "functional-models-orm-memory": "^3.0.7",
-    "functional-models-orm-mongo": "^3.6.0",
+    "functional-models-orm-mongo": "^3.6.1",
     "functional-models-orm-sql": "^3.0.0",
     "knex": "^3.1.0",
     "lodash": "^4.17.23",

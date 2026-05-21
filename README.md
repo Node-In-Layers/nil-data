@@ -20,12 +20,12 @@ This repository focuses on accessing and manipulating data, especially the abili
 
 To use this package you must do the following:
 
-1. Add this package to the `apps` property.
+1. Add this package to the `domains` property.
 1. Add `modelFactory: "@node-in-layers/data"` to the core configuration.
 1. Add a `@node-in-layers/data` section to your configuration file.
 1. Optional/Recommended: Add `modelCruds:true` to the core configuration.
 
-We recommend that you put the `data` app, as one of the earliest apps, it does not have any requirements, and subsequent packages likely want to use it.
+We recommend that you put the `data` domain as one of the earliest domains; it does not have any requirements, and subsequent packages likely want to use it.
 
 We recommend that you put the `models` layer
 
@@ -36,7 +36,7 @@ import { CoreNamespace } from '@node-in-layers/core/index.js'
 import { DataNamespace } from '@node-in-layers/data/index.js'
 
 const core = {
-  apps: await Promise.all([
+  domains: await Promise.all([
     import('@node-in-layers/data/index.js'), // Right here
     import('@node-in-layers/http/index.js'),
     import('./src/my-local-app/index.js'),
@@ -77,7 +77,7 @@ import { CoreNamespace } from '@node-in-layers/core/index.js'
 import { DataNamespace } from '@node-in-layers/data/index.js'
 
 const core = {
-  apps: await Promise.all([
+  domains: await Promise.all([
     import('@node-in-layers/data/index.js'), // Right here
     import('@node-in-layers/http/index.js'),
     import('./src/my-local-app/index.js'),
