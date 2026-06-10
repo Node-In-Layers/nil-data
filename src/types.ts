@@ -17,6 +17,7 @@ enum SupportedDatabase {
   memory = 'memory',
   json = 'json',
   dynamo = 'dynamo',
+  redis = 'redis',
   mongo = 'mongo',
   opensearch = 'opensearch',
   mysql = 'mysql',
@@ -87,6 +88,13 @@ type JsonDatabaseObjectsProps = Readonly<{
 }> &
   BasicDatabaseProps
 
+type RedisDatabaseObjectsProps = Readonly<{
+  host: string
+  port?: number
+  username?: string
+  password?: string
+}>
+
 type DatabaseObjectsProps = Readonly<{
   datastoreType: SupportedDatabase
 }> &
@@ -94,6 +102,7 @@ type DatabaseObjectsProps = Readonly<{
   (
     | DynamoDatabaseObjectsProps
     | OpensearchDatabaseObjectsProps
+    | RedisDatabaseObjectsProps
     | MongoDatabaseObjectsProps
     | SqlDatabaseObjectsProps
     | JsonDatabaseObjectsProps
@@ -268,4 +277,5 @@ export {
   MultiDatabases,
   NonProvidedDatabaseProps,
   JsonDatabaseObjectsProps,
+  RedisDatabaseObjectsProps,
 }

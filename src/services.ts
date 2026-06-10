@@ -12,6 +12,8 @@ import get from 'lodash/get.js'
 import * as dynamo from '@aws-sdk/client-dynamodb'
 import * as jsonDb from 'functional-models-orm-json'
 import * as libDynamo from '@aws-sdk/lib-dynamodb'
+import { createClient } from 'redis'
+import { datastoreAdapter as redisDatastoreAdapter } from 'functional-models-orm-redis'
 import { Client as OpenSearchClient } from '@opensearch-project/opensearch'
 import { MongoClient } from 'mongodb'
 import knex from 'knex'
@@ -36,6 +38,7 @@ import {
   DataServices,
   MultiDatabasesProps,
   JsonDatabaseObjectsProps,
+  RedisDatabaseObjectsProps,
 } from './types.js'
 import {
   getSystemInfrastructureName,
@@ -61,6 +64,28 @@ const createMongoConnectionString = ({
   return `mongodb://${username ? `${username}:${password}@` : ''}${host}:${
     port || DEFAULT_MONGO_PORT
   }${database ? `/${database}` : ''}`
+}
+
+const createRedisDatabaseObjects = ({
+  host,
+  port,
+  username,
+  password,
+}: RedisDatabaseObjectsProps): DatabaseObjects<{ redisClient: any }> => {
+  const redisClient = createClient({
+    url: `redis://${username}:${password}@${host}:${port}`,
+  })
+  redisClient.connect()
+
+  return {
+    redisClient,
+    datastoreAdapter: redisDatastoreAdapter.create({
+      redisClient,
+    }),
+    cleanup: async () => {
+      await redisClient.destroy()
+    },
+  }
 }
 
 const createMongoDatabaseObjects = ({
@@ -273,6 +298,7 @@ const _supportedToDatastoreAdapterFunc: Record<
   [SupportedDatabase.mysql]: createSqlDatabaseObjects,
   [SupportedDatabase.postgres]: createSqlDatabaseObjects,
   [SupportedDatabase.json]: createJsonDatabaseObjects,
+  [SupportedDatabase.redis]: createRedisDatabaseObjects,
 }
 
 const create = (context: ServicesContext<DataConfig>): DataServices => {
