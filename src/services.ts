@@ -47,6 +47,8 @@ import {
 } from './libs.js'
 
 const DEFAULT_MONGO_PORT = 27017
+const DEFAULT_REDIS_HOST = '127.0.0.1'
+const DEFAULT_REDIS_PORT = 6379
 
 const createMongoConnectionString = ({
   host,
@@ -72,8 +74,12 @@ const createRedisDatabaseObjects = ({
   username,
   password,
 }: RedisDatabaseObjectsProps): DatabaseObjects<{ redisClient: any }> => {
+  host = host || DEFAULT_REDIS_HOST
+  port = port || DEFAULT_REDIS_PORT
   const redisClient = createClient({
-    url: `redis://${username}:${password}@${host}:${port}`,
+    url: username
+      ? `redis://${username}:${password}@${host}:${port}`
+      : `redis://${host}:${port}`,
   })
   redisClient.connect()
 
