@@ -2,10 +2,7 @@ import {
   DataDescription,
   ModelType,
   DatastoreAdapter,
-  OrmModel,
-  OrmSearch,
   Orm,
-  PrimaryKeyType,
 } from 'functional-models'
 import { Config, GetModelPropsFunc } from '@node-in-layers/core/index.js'
 
@@ -149,51 +146,6 @@ type DatabaseObjects<T extends object = object> = {
 } & T
 
 /**
- * An interface for making CRUDS (create/retrieve/update/delete/search) commands into a database.
- */
-type ModelCrudsInterface<T extends DataDescription> = Readonly<{
-  /**
-   * Gets the underlying model.
-   */
-  getModel: () => OrmModel<T>
-  /**
-   * Create either one item, or an array of items in a database
-   * @param data
-   */
-  create: (data: T) => Promise<T>
-  /**
-   * Retrieve a single item from the database.
-   * @param id
-   */
-  retrieve: (id: string | number) => Promise<T | undefined>
-  /**
-   * Updates a single item in the database
-   * @param data
-   */
-  update: (data: T) => Promise<T>
-  /**
-   * Deletes an item from the database
-   * @param id
-   */
-  delete: (id: string | number) => Promise<void>
-  /**
-   * Searches the corresponding table for this item.
-   * @param ormQuery
-   */
-  search: (ormQuery: OrmSearch) => Promise<SearchResult<T>>
-  /**
-   * Bulk inserts an array of items into the database
-   * @param data
-   */
-  bulkInsert: (data: T[]) => Promise<void>
-  /**
-   * Bulk deletes an array of items from the database
-   * @param primaryKeys
-   */
-  bulkDelete: (primaryKeys: PrimaryKeyType[]) => Promise<void>
-}>
-
-/**
  * Data services.
  */
 type DataServices = Readonly<{
@@ -222,27 +174,6 @@ type DataServicesLayer = Readonly<{
 }>
 
 /**
- * The Features for the Data package.
- */
-type DataFeatures = Readonly<{
-  wrapModelCrudsService: <T extends DataDescription>(
-    modelCruds: ModelCrudsInterface<T>,
-    overrides: Partial<ModelCrudsInterface<T>>
-  ) => ModelCrudsInterface<T>
-  wrapAllModelCrudsServices: (
-    objs: Record<string, ModelCrudsInterface<any>>,
-    overrides?: Record<string, ModelCrudsInterface<any>>
-  ) => Record<string, ModelCrudsInterface<any>>
-}>
-
-/**
- * The Features Layer for the Data package.
- */
-type DataFeaturesLayer = Readonly<{
-  [DataNamespace.root]: DataFeatures
-}>
-
-/**
  * The default database configured.
  */
 type DefaultDatabase = {
@@ -256,8 +187,6 @@ type MultiDatabases = DefaultDatabase & Record<string, DatabaseObjects>
 
 export {
   DataServices,
-  DataFeatures,
-  DataFeaturesLayer,
   DataNamespace,
   SupportedDatabase,
   MongoDatabaseObjectsProps,
@@ -270,7 +199,6 @@ export {
   SqliteConfigProps,
   SearchResult,
   DatabaseObjects,
-  ModelCrudsInterface,
   DataConfig,
   DataServicesLayer,
   MultiDatabasesProps,
